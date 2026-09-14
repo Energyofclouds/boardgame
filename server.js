@@ -11,6 +11,10 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
+// Health check endpoint for Render monitoring
+app.get('/healthz', (req, res) => res.status(200).send('OK'));
+app.get('/health', (req, res) => res.status(200).send('OK'));
+
 // Serve static client files from 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -144,6 +148,7 @@ function startRoundOnServer(room, roundNum) {
 }
 
 function addLog(room, msg, type = 'normal') {
+  if (!room || !room.gameState) return;
   if (!room.gameState.logs) room.gameState.logs = [];
   room.gameState.logs.push({ msg, type, timestamp: Date.now() });
 }
@@ -628,6 +633,15 @@ function resolveNextCasinoServer(room) {
   }, 3200);
 }
 
-server.listen(PORT, () => {
-  console.log(`🎲 Las Vegas Online Server running at http://localhost:${PORT}`);
+// Global process-level error safety guards to prevent Exit 1 crashes
+process.on('uncaughtException', (err) => {
+  console.error('🔥 Caught uncaughtException:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🔥 Caught unhandledRejection:', reason);
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🎲 Las Vegas Online Server running on 0.0.0.0:${PORT}`);
 });
