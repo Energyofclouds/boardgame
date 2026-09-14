@@ -903,16 +903,720 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 1080px), (max-height: 620px) {
-      html, body { height: auto; overflow-y: auto; }
-      .game-container { height: auto; max-height: none; flex-direction: column; }
-      .players-sidebar, .info-sidebar { width: 100%; height: auto; }
-      .casinos-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; }
-      .log-panel { height: 260px; }
+    /* Base Utility for Mobile & Drawer */
+    .header-top-row { display: flex; align-items: center; gap: 10px; }
+    .header-sub-row { display: flex; align-items: center; gap: 8px; }
+    .mobile-chat-btn { display: none; }
+    .mobile-recent-ticker { display: none; }
+    .drawer-close-btn { display: none; }
+    .mobile-drawer-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(2px);
+      z-index: 115;
     }
 
-    @media (max-width: 650px) {
-      .casinos-grid { grid-template-columns: 1fr; }
+    /* Desktop tablet responsive (between 769px and 1200px) */
+    @media (min-width: 769px) and (max-width: 1200px) {
+      .players-sidebar { width: 190px; min-width: 170px; }
+      .info-sidebar { width: 220px; min-width: 200px; }
+    }
+
+    /* =========================================================
+       MOBILE PORTRAIT OPTIMIZATION (<= 768px)
+       Fits 100% inside 100dvh without vertical scrolling!
+    ========================================================= */
+    @media (max-width: 768px) {
+      html, body {
+        height: 100vh !important;
+        height: 100dvh !important;
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* 1. Header: 2 Clean Rows, No Overflow/Wrap Glitches */
+      header {
+        flex-direction: column !important;
+        padding: 4px 8px !important;
+        gap: 3px !important;
+        height: auto !important;
+        min-height: 62px !important;
+        max-height: 66px !important;
+        justify-content: center !important;
+      }
+
+      .header-top-row {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 4px !important;
+      }
+
+      .header-sub-row {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 4px !important;
+      }
+
+      .logo-badge {
+        font-size: 0.82rem !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        letter-spacing: 0px !important;
+      }
+
+      .badge {
+        padding: 2px 6px !important;
+        font-size: 0.72rem !important;
+        border-radius: 10px !important;
+        white-space: nowrap !important;
+        gap: 3px !important;
+      }
+
+      .badge.room-code-badge {
+        font-size: 0.72rem !important;
+        padding: 2px 6px !important;
+      }
+
+      .controls {
+        gap: 3px !important;
+      }
+
+      .btn-icon {
+        padding: 3px 6px !important;
+        font-size: 0.75rem !important;
+        border-radius: 6px !important;
+      }
+
+      .btn-text.desktop-only, .desktop-only {
+        display: none !important;
+      }
+
+      .mobile-chat-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+        background: #2563eb !important;
+        color: #fff !important;
+        border: none !important;
+        padding: 2px 8px !important;
+        border-radius: 10px !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+      }
+
+      /* 2. Main Game Container: Fits Exactly in Remaining Height */
+      .game-container {
+        height: calc(100dvh - 66px) !important;
+        max-height: calc(100dvh - 66px) !important;
+        flex-direction: column !important;
+        padding: 3px 4px !important;
+        gap: 3px !important;
+        overflow: hidden !important;
+        width: 100% !important;
+      }
+
+      /* 3. Players Bar: 1 Horizontal Mini-Chips Row */
+      .players-sidebar {
+        width: 100% !important;
+        min-width: 0 !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        padding: 1px 2px !important;
+        gap: 4px !important;
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .player-card {
+        padding: 2px 6px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 4px !important;
+        border-radius: 6px !important;
+        border-width: 1.5px !important;
+        height: 28px !important;
+        box-shadow: none !important;
+        flex-shrink: 0 !important;
+      }
+
+      .player-header {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+      }
+
+      .player-avatar {
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 0.68rem !important;
+      }
+
+      .player-name {
+        font-size: 0.74rem !important;
+        max-width: 60px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+
+      .turn-indicator {
+        display: none !important;
+      }
+
+      .player-info-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .player-info-row > span:not(.player-money):not(.mini-die-icon) {
+        display: none !important;
+      }
+
+      .player-money {
+        font-size: 0.74rem !important;
+      }
+
+      .player-dice-status {
+        padding: 1px 4px !important;
+        font-size: 0.7rem !important;
+        gap: 2px !important;
+      }
+
+      /* 4. Center Board & 2x3 Grid */
+      .board-center {
+        flex: 1 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+        overflow: hidden !important;
+      }
+
+      .casinos-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-rows: repeat(3, 1fr) !important;
+        gap: 3px !important;
+        flex: 1 !important;
+        min-height: 0 !important;
+      }
+
+      .casino-tile {
+        padding: 3px 5px !important;
+        border-radius: 8px !important;
+        border-width: 1.5px !important;
+        overflow: hidden !important;
+      }
+
+      .casino-header {
+        padding-bottom: 2px !important;
+        margin-bottom: 2px !important;
+      }
+
+      .casino-number-badge {
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 0.8rem !important;
+        border-radius: 4px !important;
+      }
+
+      .casino-name {
+        font-size: 0.72rem !important;
+        max-width: 78px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+
+      .casino-total-cash {
+        font-size: 0.7rem !important;
+        padding: 1px 4px !important;
+        border-radius: 6px !important;
+      }
+
+      .banknotes-container {
+        gap: 2px !important;
+        margin-bottom: 2px !important;
+        padding-bottom: 1px !important;
+      }
+
+      .banknote {
+        padding: 1px 4px !important;
+        font-size: 0.62rem !important;
+        border-radius: 3px !important;
+      }
+
+      .casino-dice-area {
+        padding: 2px 3px !important;
+        gap: 2px !important;
+      }
+
+      .dice-player-group {
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+      }
+
+      .dice-player-label {
+        font-size: 0.68rem !important;
+        gap: 2px !important;
+      }
+
+      .die {
+        width: 16px !important;
+        height: 16px !important;
+        font-size: 0.68rem !important;
+        border-radius: 3px !important;
+      }
+
+      /* 5. Action Tray (Compact Bottom Controls) */
+      .action-tray {
+        padding: 4px 8px !important;
+        gap: 3px !important;
+        border-radius: 8px !important;
+        border-width: 1.5px !important;
+        flex-shrink: 0 !important;
+      }
+
+      .tray-top {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+      }
+
+      .tray-instruction {
+        font-size: 0.74rem !important;
+        max-width: 170px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+
+      .btn-main {
+        padding: 5px 12px !important;
+        font-size: 0.8rem !important;
+        border-radius: 6px !important;
+      }
+
+      .dice-roll-zone {
+        min-height: 34px !important;
+        padding: 2px 4px !important;
+        gap: 4px !important;
+      }
+
+      .dice-group-btn {
+        padding: 2px 6px !important;
+        border-radius: 6px !important;
+        gap: 4px !important;
+      }
+
+      /* 6. Mini Log Ticker Bar */
+      .mobile-recent-ticker {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        background: rgba(15, 23, 42, 0.95) !important;
+        border: 1px solid #334155 !important;
+        border-radius: 6px !important;
+        padding: 2px 8px !important;
+        font-size: 0.72rem !important;
+        color: #94a3b8 !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        height: 24px !important;
+      }
+
+      #mobile-ticker-text {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        max-width: 250px !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* 7. Bottom Sheet Drawer for Log & Chat */
+      .info-sidebar {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 65vh !important;
+        z-index: 120 !important;
+        background: rgba(15, 23, 42, 0.98) !important;
+        backdrop-filter: blur(14px) !important;
+        border-top: 2px solid var(--gold) !important;
+        border-radius: 16px 16px 0 0 !important;
+        box-shadow: 0 -8px 35px rgba(0,0,0,0.85) !important;
+        transform: translateY(105%) !important;
+        transition: transform 0.28s cubic-bezier(0.1, 0.9, 0.2, 1) !important;
+        display: flex !important;
+        padding: 8px !important;
+        gap: 4px !important;
+      }
+
+      .info-sidebar.drawer-open {
+        transform: translateY(0%) !important;
+      }
+
+      .drawer-close-btn {
+        display: inline-block !important;
+        background: #334155 !important;
+        color: #fff !important;
+        border: none !important;
+        padding: 3px 8px !important;
+        border-radius: 4px !important;
+        font-size: 0.75rem !important;
+        cursor: pointer !important;
+      }
+
+      .tip-card {
+        display: none !important;
+      }
+    }
+
+    /* =========================================================
+       SMARTPHONE LANDSCAPE OPTIMIZATION (max-height <= 550px)
+       Wide & Console-style: 3x2 Grid, Left Slim Players, Bottom Action Tray
+       No Scrolling Needed! Fits 100% in Landscape!
+    ========================================================= */
+    @media (max-height: 550px) and (orientation: landscape) {
+      html, body {
+        height: 100vh !important;
+        height: 100dvh !important;
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* 1. Super Compact 1-Row Header (32px) */
+      header {
+        flex-direction: row !important;
+        padding: 2px 8px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+      }
+
+      .header-top-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: auto !important;
+      }
+
+      .header-sub-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: auto !important;
+      }
+
+      .logo-badge {
+        font-size: 0.76rem !important;
+        padding: 1px 6px !important;
+        border-radius: 4px !important;
+      }
+
+      .badge {
+        padding: 1px 6px !important;
+        font-size: 0.68rem !important;
+        border-radius: 8px !important;
+        white-space: nowrap !important;
+      }
+
+      .badge.room-code-badge {
+        font-size: 0.68rem !important;
+      }
+
+      .controls {
+        gap: 2px !important;
+      }
+
+      .btn-icon {
+        padding: 2px 5px !important;
+        font-size: 0.7rem !important;
+      }
+
+      .btn-text.desktop-only, .desktop-only {
+        display: none !important;
+      }
+
+      .mobile-chat-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 2px !important;
+        background: #2563eb !important;
+        color: #fff !important;
+        border: none !important;
+        padding: 2px 6px !important;
+        border-radius: 8px !important;
+        font-size: 0.68rem !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+      }
+
+      /* 2. Game Container (Horizontal Flex) */
+      .game-container {
+        height: calc(100dvh - 34px) !important;
+        max-height: calc(100dvh - 34px) !important;
+        flex-direction: row !important;
+        padding: 2px 6px !important;
+        gap: 6px !important;
+        overflow: hidden !important;
+        width: 100% !important;
+      }
+
+      /* 3. Left Players Column (Slim Mini Cards) */
+      .players-sidebar {
+        width: 135px !important;
+        min-width: 125px !important;
+        max-width: 145px !important;
+        height: 100% !important;
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding: 1px !important;
+        gap: 3px !important;
+        flex-shrink: 0 !important;
+      }
+
+      .player-card {
+        padding: 2px 5px !important;
+        flex-direction: column !important;
+        border-radius: 6px !important;
+        border-width: 1.5px !important;
+        gap: 2px !important;
+      }
+
+      .player-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+      }
+
+      .player-name-wrap {
+        gap: 3px !important;
+      }
+
+      .player-avatar {
+        width: 16px !important;
+        height: 16px !important;
+        font-size: 0.65rem !important;
+      }
+
+      .player-name {
+        font-size: 0.72rem !important;
+        max-width: 75px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+
+      .turn-indicator {
+        font-size: 0.62rem !important;
+        padding: 1px 3px !important;
+      }
+
+      .player-info-row {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        font-size: 0.68rem !important;
+      }
+
+      .player-money {
+        font-size: 0.72rem !important;
+      }
+
+      .player-dice-status {
+        padding: 1px 3px !important;
+        font-size: 0.68rem !important;
+      }
+
+      /* 4. Center Board: 3x2 Grid (Wide & Roomy!) */
+      .board-center {
+        flex: 1 !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+        overflow: hidden !important;
+        min-width: 0 !important;
+      }
+
+      .casinos-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        grid-template-rows: repeat(2, 1fr) !important;
+        gap: 3px !important;
+        flex: 1 !important;
+        min-height: 0 !important;
+      }
+
+      .casino-tile {
+        padding: 2px 5px !important;
+        border-radius: 8px !important;
+        border-width: 1.5px !important;
+        overflow: hidden !important;
+      }
+
+      .casino-header {
+        padding-bottom: 2px !important;
+        margin-bottom: 2px !important;
+      }
+
+      .casino-number-badge {
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 0.8rem !important;
+        border-radius: 4px !important;
+      }
+
+      .casino-name {
+        font-size: 0.72rem !important;
+        max-width: 90px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+
+      .casino-total-cash {
+        font-size: 0.7rem !important;
+        padding: 1px 4px !important;
+        border-radius: 6px !important;
+      }
+
+      .banknotes-container {
+        gap: 2px !important;
+        margin-bottom: 2px !important;
+        padding-bottom: 1px !important;
+      }
+
+      .banknote {
+        padding: 1px 4px !important;
+        font-size: 0.62rem !important;
+      }
+
+      .casino-dice-area {
+        padding: 2px 3px !important;
+        gap: 2px !important;
+      }
+
+      .dice-player-group {
+        padding: 1px 3px !important;
+      }
+
+      .dice-player-label {
+        font-size: 0.68rem !important;
+      }
+
+      .die {
+        width: 16px !important;
+        height: 16px !important;
+        font-size: 0.68rem !important;
+        border-radius: 3px !important;
+      }
+
+      /* 5. Action Tray: Slim Controls at Bottom of Center Board */
+      .action-tray {
+        padding: 3px 8px !important;
+        gap: 2px !important;
+        border-radius: 8px !important;
+        flex-shrink: 0 !important;
+      }
+
+      .tray-top {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+      }
+
+      .tray-instruction {
+        font-size: 0.74rem !important;
+        max-width: 260px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+
+      .btn-main {
+        padding: 3px 10px !important;
+        font-size: 0.78rem !important;
+        border-radius: 6px !important;
+      }
+
+      .dice-roll-zone {
+        min-height: 28px !important;
+        padding: 2px 4px !important;
+        gap: 4px !important;
+      }
+
+      .dice-group-btn {
+        padding: 1px 5px !important;
+        border-radius: 6px !important;
+        gap: 3px !important;
+      }
+
+      .mobile-recent-ticker {
+        display: none !important;
+      }
+
+      /* Drawer for Landscape (Slides from Right) */
+      .info-sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        left: auto !important;
+        width: 320px !important;
+        max-width: 80% !important;
+        height: 100% !important;
+        z-index: 120 !important;
+        background: rgba(15, 23, 42, 0.98) !important;
+        backdrop-filter: blur(14px) !important;
+        border-left: 2px solid var(--gold) !important;
+        border-top: none !important;
+        border-radius: 0 !important;
+        box-shadow: -8px 0 35px rgba(0,0,0,0.85) !important;
+        transform: translateX(105%) !important;
+        transition: transform 0.28s cubic-bezier(0.1, 0.9, 0.2, 1) !important;
+        display: flex !important;
+        padding: 8px !important;
+        gap: 4px !important;
+      }
+
+      .info-sidebar.drawer-open {
+        transform: translateX(0%) !important;
+      }
+
+      .tip-card {
+        display: none !important;
+      }
     }
   </style>
 </head>
@@ -920,33 +1624,39 @@
 
   <!-- Top Header -->
   <header>
-    <div class="title-area">
-      <div class="logo-badge">LAS VEGAS ONLINE</div>
-      <div class="game-status-badges">
-        <div class="badge round-badge" id="round-indicator">
-          <span>🏆</span> <span id="round-text">라운드 1 / 4</span>
-        </div>
-        <div class="badge room-code-badge" id="room-badge" onclick="copyInviteLink()" title="클릭하여 친구 초대 링크 복사">
-          <span>🔑</span> 방 코드: <b id="room-code-display">----</b> (초대 복사)
-        </div>
-        <div class="badge" id="turn-badge">
-          <span>🎲</span> <span id="turn-text">대기 중</span>
-        </div>
+    <div class="header-top-row">
+      <div class="logo-badge">LAS VEGAS</div>
+      <div class="badge room-code-badge" id="room-badge" onclick="copyInviteLink()" title="클릭하여 친구 초대 링크 복사">
+        <span>🔑</span> <b id="room-code-display">----</b> <span class="desktop-only">(초대 복사)</span>
+      </div>
+      <div class="controls">
+        <button class="btn-icon" id="btn-sound" onclick="toggleSound()" title="소리 설정">
+          <span id="sound-icon">🔊</span><span class="btn-text desktop-only"> 소리 켜짐</span>
+        </button>
+        <button class="btn-icon" onclick="openRulesModal()" title="게임 규칙">
+          <span>📖</span><span class="btn-text desktop-only"> 규칙</span>
+        </button>
+        <button class="btn-icon" onclick="leaveRoomConfirm()" title="방 나가기">
+          <span>🚪</span><span class="btn-text desktop-only"> 나가기</span>
+        </button>
       </div>
     </div>
 
-    <div class="controls">
-      <button class="btn-icon" id="btn-sound" onclick="toggleSound()">
-        <span id="sound-icon">🔊</span> 소리 켜짐
-      </button>
-      <button class="btn-icon" onclick="openRulesModal()">
-        <span>📖</span> 규칙 설명
-      </button>
-      <button class="btn-icon" onclick="leaveRoomConfirm()">
-        <span>🚪</span> 방 나가기
+    <div class="header-sub-row">
+      <div class="badge round-badge" id="round-indicator">
+        <span>🏆</span> <span id="round-text">라운드 1 / 4</span>
+      </div>
+      <div class="badge" id="turn-badge">
+        <span>🎲</span> <span id="turn-text">대기 중</span>
+      </div>
+      <button class="mobile-chat-btn" id="mobile-chat-btn" onclick="toggleMobileChat()">
+        💬 채팅 <span id="mobile-chat-unread" style="display:none; color:#f87171; font-size:0.75rem;">●</span>
       </button>
     </div>
   </header>
+
+  <!-- Mobile Drawer Backdrop -->
+  <div class="mobile-drawer-backdrop" id="mobile-drawer-backdrop" onclick="toggleMobileChat(false)"></div>
 
   <!-- Main Game Container -->
   <div class="game-container" id="game-main-container">
@@ -981,18 +1691,27 @@
         <div class="dice-roll-zone" id="dice-roll-zone">
           <span style="color: #64748b; font-size: 0.85rem;">내 턴이 되면 주사위 굴리기 버튼이 활성화됩니다.</span>
         </div>
+
+        <!-- Mobile Recent Log Ticker -->
+        <div class="mobile-recent-ticker" id="mobile-recent-ticker" onclick="toggleMobileChat(true)">
+          <span>📢 <span id="mobile-ticker-text">게임이 시작되었습니다.</span></span>
+          <span style="font-size:0.68rem; color:#38bdf8; font-weight:bold;">[로그/채팅 열기]</span>
+        </div>
       </div>
     </div>
 
-    <!-- Right: Log & Chat Panel -->
-    <div class="info-sidebar">
+    <!-- Right: Log & Chat Panel (Mobile Drawer) -->
+    <div class="info-sidebar" id="info-sidebar">
       <div class="log-panel">
         <div class="panel-header">
-          <div style="display: flex; gap: 4px;">
+          <div style="display: flex; gap: 4px; align-items: center;">
             <button class="tab-btn active" id="tab-btn-log" onclick="switchRightTab('log')">📜 게임 로그</button>
             <button class="tab-btn" id="tab-btn-chat" onclick="switchRightTab('chat')">💬 채팅</button>
           </div>
-          <span style="font-size: 0.75rem; color: #64748b;" id="log-round-badge">R1</span>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <span style="font-size: 0.75rem; color: #64748b;" id="log-round-badge">R1</span>
+            <button class="drawer-close-btn" onclick="toggleMobileChat(false)">✕ 닫기</button>
+          </div>
         </div>
 
         <div class="log-content" id="game-log">
@@ -1283,6 +2002,29 @@ function switchRightTab(tab) {
   document.getElementById('game-log').style.display = tab === 'log' ? 'flex' : 'none';
   document.getElementById('game-chat').style.display = tab === 'chat' ? 'flex' : 'none';
   document.getElementById('chat-input-row').style.display = tab === 'chat' ? 'flex' : 'none';
+  if (tab === 'chat') {
+    document.getElementById('tab-btn-chat').innerText = '💬 채팅';
+    const mobileUnread = document.getElementById('mobile-chat-unread');
+    if (mobileUnread) mobileUnread.style.display = 'none';
+  }
+}
+
+let isMobileChatOpen = false;
+function toggleMobileChat(forceState) {
+  const sidebar = document.getElementById('info-sidebar');
+  const backdrop = document.getElementById('mobile-drawer-backdrop');
+  if (!sidebar) return;
+
+  isMobileChatOpen = forceState !== undefined ? forceState : !isMobileChatOpen;
+  if (isMobileChatOpen) {
+    sidebar.classList.add('drawer-open');
+    if (backdrop) backdrop.style.display = 'block';
+    const mobileUnread = document.getElementById('mobile-chat-unread');
+    if (mobileUnread) mobileUnread.style.display = 'none';
+  } else {
+    sidebar.classList.remove('drawer-open');
+    if (backdrop) backdrop.style.display = 'none';
+  }
 }
 
 function sendChat() {
@@ -1327,12 +2069,18 @@ socket.on('error_message', ({ message }) => {
 socket.on('game_started', (room) => {
   currentRoom = room;
   document.getElementById('lobby-screen').style.display = 'none';
+  const popup = document.getElementById('resolution-popup');
+  if (popup) popup.classList.remove('active');
   renderGame(room);
   playCashSound();
 });
 
 socket.on('room_state_updated', (room) => {
   currentRoom = room;
+  if (!room.gameState || !room.gameState.isResolving) {
+    const popup = document.getElementById('resolution-popup');
+    if (popup) popup.classList.remove('active');
+  }
   renderGame(room);
 });
 
@@ -1375,6 +2123,10 @@ socket.on('new_chat', ({ senderName, senderColor, text }) => {
   // Badge notification on chat tab if not active
   if (currentTab !== 'chat') {
     document.getElementById('tab-btn-chat').innerText = '💬 채팅 🔴';
+  }
+  if (!isMobileChatOpen) {
+    const mobileUnread = document.getElementById('mobile-chat-unread');
+    if (mobileUnread) mobileUnread.style.display = 'inline-block';
   }
 });
 
@@ -1532,11 +2284,12 @@ function renderCasinosGrid(room) {
       diceGroupsHtml = `<div style="color: #64748b; font-size:0.75rem; text-align:center; margin-top:6px;">배치된 주사위 없음</div>`;
     }
 
+    const shortCasinoName = c.name.split(' (')[0].replace(/^\d+:\s*/, '');
     tile.innerHTML = `
       <div class="casino-header">
-        <div style="display: flex; align-items: center; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden;">
           <div class="casino-number-badge">${c.number}</div>
-          <div class="casino-name">${c.name}</div>
+          <div class="casino-name" title="${c.name}">${shortCasinoName}</div>
         </div>
         <div class="casino-total-cash">${formatMoney(totalCash)}</div>
       </div>
@@ -1641,6 +2394,15 @@ function renderLogs(logs) {
     div.innerHTML = item.msg;
     logDiv.appendChild(div);
   });
+
+  // Update mobile ticker text
+  const ticker = document.getElementById('mobile-ticker-text');
+  if (ticker && logs.length > 0) {
+    const latest = logs[logs.length - 1];
+    const tmp = document.createElement('div');
+    tmp.innerHTML = latest.msg;
+    ticker.innerText = tmp.textContent || tmp.innerText || '';
+  }
 }
 
 /* =========================================================
@@ -1663,6 +2425,8 @@ function onConfirmPlacementClick() {
 
 function onProceedNextCasinoClick() {
   if (!currentRoom) return;
+  const nextBtn = document.getElementById('btn-next-casino');
+  if (nextBtn) nextBtn.innerText = '확인 중... ▶';
   socket.emit('proceed_next_casino', { roomCode: currentRoom.code });
 }
 

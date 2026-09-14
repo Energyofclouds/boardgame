@@ -232,11 +232,8 @@ function placeDiceServer(room, player, casinoNum, count) {
   // Check if round finishes
   const anyDiceLeft = room.players.some(p => p.diceLeft > 0);
   if (!anyDiceLeft) {
-    // All dice placed -> start resolution
-    room.gameState.isResolving = true;
-    room.gameState.resolvingCasinoIdx = 0;
-    addLog(room, `🎰 모든 플레이어의 주사위가 소진되었습니다! <b>카지노 상금 정산</b>을 시작합니다.`, 'win');
-    io.to(room.code).emit('room_state_updated', getSanitizedRoom(room));
+    // All dice placed -> start resolution automatically!
+    startResolutionServer(room);
     return;
   }
 
@@ -469,87 +466,16 @@ io.on('connection', (socket) => {
     placeDiceServer(room, activePlayer, num, count);
   });
 
-  // 9. Proceed Next Casino Resolution (Host or Active)
+  // 9. Proceed Next Casino Resolution (User Skip / Next button)
   socket.on('proceed_next_casino', ({ roomCode }) => {
     const room = rooms.get(roomCode);
-    if (!room || room.status !== 'playing' || !room.gameState.isResolving) return;
+    if (!room || room.status !== 'playing' || !room.gameState || !room.gameState.isResolving) return;
 
-    const idx = room.gameState.resolvingCasinoIdx;
-    if (idx >= 6) {
-      // Round finish
-      if (room.gameState.round < room.gameState.totalRounds) {
-        addLog(room, `🏁 <b>제 ${room.gameState.round} 라운드 종료!</b> 잠시 후 다음 라운드가 시작됩니다.`, 'win');
-        setTimeout(() => {
-          if (room.status === 'playing') {
-            startRoundOnServer(room, room.gameState.round + 1);
-            io.to(roomCode).emit('room_state_updated', getSanitizedRoom(room));
-          }
-        }, 1200);
-      } else {
-        // Game Over
-        room.status = 'gameover';
-        addLog(room, `🏆 <b>모든 라운드가 종료되었습니다! 최종 결과를 발표합니다!</b>`, 'win');
-        io.to(roomCode).emit('game_over', getSanitizedRoom(room));
-      }
-      return;
+    if (room.resolutionTimer) {
+      clearTimeout(room.resolutionTimer);
+      room.resolutionTimer = null;
     }
-
-    const casino = room.gameState.casinos[idx];
-    if (!casino.resolved) {
-      casino.resolved = true;
-
-      let participants = [];
-      room.players.forEach(p => {
-        const count = casino.dice[p.playerIndex] || 0;
-        if (count > 0) {
-          participants.push({ player: p, count: count, tied: false });
-        }
-      });
-
-      let countMap = {};
-      participants.forEach(item => {
-        countMap[item.count] = (countMap[item.count] || 0) + 1;
-      });
-
-      let tiedPlayers = [];
-      participants.forEach(item => {
-        if (countMap[item.count] > 1) {
-          item.tied = true;
-          tiedPlayers.push(`${item.player.name} (${item.count}개)`);
-        }
-      });
-
-      let survivors = participants.filter(item => !item.tied);
-      survivors.sort((a, b) => b.count - a.count);
-
-      let payouts = [];
-      if (tiedPlayers.length > 0) {
-        addLog(room, `⚡ <b>${casino.number}번 카지노 동수 탈락:</b> [${tiedPlayers.join(', ')}] 상쇄 탈락!`, 'tie');
-      }
-
-      let billIdx = 0;
-      survivors.forEach((item, rk) => {
-        if (billIdx < casino.bills.length) {
-          const awarded = casino.bills[billIdx];
-          item.player.money += awarded;
-          payouts.push({ name: item.player.name, amount: awarded, rank: rk + 1 });
-          addLog(room, `🎉 <b>${item.player.name}</b> (${item.count}개로 ${rk + 1}등) 👉 $${(awarded/1000)}k 획득!`, 'win');
-          billIdx++;
-        }
-      });
-
-      io.to(roomCode).emit('casino_resolution_result', {
-        casinoIndex: idx,
-        casinoName: casino.name,
-        tiedPlayers,
-        survivors: survivors.map(s => ({ name: s.player.name, count: s.count })),
-        payouts,
-        allBills: casino.bills
-      });
-    }
-
-    room.gameState.resolvingCasinoIdx++;
-    io.to(roomCode).emit('room_state_updated', getSanitizedRoom(room));
+    resolveNextCasinoServer(room);
   });
 
   // 10. Chat Message
@@ -593,6 +519,114 @@ io.on('connection', (socket) => {
     }
   });
 });
+
+function startResolutionServer(room) {
+  room.gameState.isResolving = true;
+  room.gameState.resolvingCasinoIdx = 0;
+  addLog(room, `🎰 모든 플레이어의 주사위가 소진되었습니다! <b>카지노 상금 정산</b>을 시작합니다.`, 'win');
+  io.to(room.code).emit('room_state_updated', getSanitizedRoom(room));
+
+  // 1초 뒤 첫 번째 카지노(1번) 정산 자동 시작!
+  if (room.resolutionTimer) clearTimeout(room.resolutionTimer);
+  room.resolutionTimer = setTimeout(() => {
+    resolveNextCasinoServer(room);
+  }, 1000);
+}
+
+function resolveNextCasinoServer(room) {
+  if (!room || room.status !== 'playing' || !room.gameState || !room.gameState.isResolving) return;
+
+  if (room.resolutionTimer) {
+    clearTimeout(room.resolutionTimer);
+    room.resolutionTimer = null;
+  }
+
+  const idx = room.gameState.resolvingCasinoIdx;
+
+  if (idx >= 6) {
+    // 6개 카지노 모두 정산 완료!
+    if (room.gameState.round < room.gameState.totalRounds) {
+      addLog(room, `🏁 <b>제 ${room.gameState.round} 라운드 정산 완료!</b> 2초 후 다음 라운드가 시작됩니다.`, 'win');
+      io.to(room.code).emit('room_state_updated', getSanitizedRoom(room));
+
+      room.resolutionTimer = setTimeout(() => {
+        if (room.status === 'playing') {
+          startRoundOnServer(room, room.gameState.round + 1);
+          io.to(room.code).emit('room_state_updated', getSanitizedRoom(room));
+        }
+      }, 2200);
+    } else {
+      // 4라운드 게임 종료!
+      room.status = 'gameover';
+      room.gameState.isResolving = false;
+      addLog(room, `🏆 <b>모든 라운드가 종료되었습니다! 최종 결과를 발표합니다!</b>`, 'win');
+      io.to(room.code).emit('game_over', getSanitizedRoom(room));
+    }
+    return;
+  }
+
+  const casino = room.gameState.casinos[idx];
+  if (!casino.resolved) {
+    casino.resolved = true;
+
+    let participants = [];
+    room.players.forEach(p => {
+      const count = casino.dice[p.playerIndex] || 0;
+      if (count > 0) {
+        participants.push({ player: p, count: count, tied: false });
+      }
+    });
+
+    let countMap = {};
+    participants.forEach(item => {
+      countMap[item.count] = (countMap[item.count] || 0) + 1;
+    });
+
+    let tiedPlayers = [];
+    participants.forEach(item => {
+      if (countMap[item.count] > 1) {
+        item.tied = true;
+        tiedPlayers.push(`${item.player.name} (${item.count}개)`);
+      }
+    });
+
+    let survivors = participants.filter(item => !item.tied);
+    survivors.sort((a, b) => b.count - a.count);
+
+    let payouts = [];
+    if (tiedPlayers.length > 0) {
+      addLog(room, `⚡ <b>${casino.number}번 카지노 동수 탈락:</b> [${tiedPlayers.join(', ')}] 상쇄 탈락!`, 'tie');
+    }
+
+    let billIdx = 0;
+    survivors.forEach((item, rk) => {
+      if (billIdx < casino.bills.length) {
+        const awarded = casino.bills[billIdx];
+        item.player.money += awarded;
+        payouts.push({ name: item.player.name, amount: awarded, rank: rk + 1 });
+        addLog(room, `🎉 <b>${item.player.name}</b> (${item.count}개로 ${rk + 1}등) 👉 $${(awarded/1000)}k 획득!`, 'win');
+        billIdx++;
+      }
+    });
+
+    io.to(room.code).emit('casino_resolution_result', {
+      casinoIndex: idx,
+      casinoName: casino.name,
+      tiedPlayers,
+      survivors: survivors.map(s => ({ name: s.player.name, count: s.count })),
+      payouts,
+      allBills: casino.bills
+    });
+  }
+
+  room.gameState.resolvingCasinoIdx++;
+  io.to(room.code).emit('room_state_updated', getSanitizedRoom(room));
+
+  // 3.2초 뒤 다음 카지노 자동 정산 (유저가 버튼 누르면 즉시 넘어감)
+  room.resolutionTimer = setTimeout(() => {
+    resolveNextCasinoServer(room);
+  }, 3200);
+}
 
 server.listen(PORT, () => {
   console.log(`🎲 Las Vegas Online Server running at http://localhost:${PORT}`);
